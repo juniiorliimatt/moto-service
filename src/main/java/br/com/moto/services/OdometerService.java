@@ -3,6 +3,7 @@ package br.com.moto.services;
 import br.com.moto.domain.OdometerPoint;
 import br.com.moto.domain.OdometerRules;
 import br.com.moto.repositories.OdometerReadingRepository;
+import br.com.moto.repositories.RefuelingRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +21,13 @@ public class OdometerService {
 
     private final MotorcycleService motorcycleService;
     private final OdometerReadingRepository readingRepository;
+    private final RefuelingRepository refuelingRepository;
 
-    public OdometerService(final MotorcycleService motorcycleService, final OdometerReadingRepository readingRepository) {
+    public OdometerService(final MotorcycleService motorcycleService, final OdometerReadingRepository readingRepository,
+                           final RefuelingRepository refuelingRepository) {
         this.motorcycleService = motorcycleService;
         this.readingRepository = readingRepository;
+        this.refuelingRepository = refuelingRepository;
     }
 
     /** Todos os registros de hodômetro da moto, de qualquer fonte. 404 se a moto não for do dono. */
@@ -52,6 +56,9 @@ public class OdometerService {
         final var pontos = new ArrayList<OdometerPoint>();
         readingRepository.findByMotorcycleIdAndOwnerUsernameOrderByDateAscOdometerKmAsc(motoId, owner)
                 .forEach(leitura -> pontos.add(new OdometerPoint(leitura.getId(), leitura.getDate(), leitura.getOdometerKm())));
+        refuelingRepository.findByMotorcycleIdAndOwnerUsernameOrderByDateAscOdometerKmAsc(motoId, owner)
+                .forEach(abastecimento -> pontos.add(
+                        new OdometerPoint(abastecimento.getId(), abastecimento.getDate(), abastecimento.getOdometerKm())));
         return pontos;
     }
 }
