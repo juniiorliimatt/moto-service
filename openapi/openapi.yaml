@@ -1,0 +1,945 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: oojuniin@outlook.com
+    name: Junior Lima
+  description: "Contrato REST do moto-service (abastecimentos, consumo, km rodados\
+    \ e troca de óleo). Este documento é a fonte da verdade para qualquer client (frontend,\
+    \ agentes de IA) que consuma esta API — não assuma comportamento não descrito\
+    \ aqui."
+  title: Moto Service API
+  version: 0.0.1
+servers:
+- description: Relativo ao host onde a API estiver publicada
+  url: /
+security:
+- bearer-jwt: []
+paths:
+  /api/v1/motorcycles:
+    get:
+      operationId: listar
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MotorcycleDTO"
+          description: OK
+      summary: "Lista as motos do usuário autenticado, por apelido"
+      tags:
+      - Motos
+    post:
+      operationId: criar
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MotorcycleRequestDTO"
+        required: true
+      responses:
+        "201":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MotorcycleDTO"
+          description: Created
+      summary: Cadastra uma moto; o dono vem sempre do token
+      tags:
+      - Motos
+  /api/v1/motorcycles/{id}:
+    delete:
+      operationId: excluir_2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      summary: "Exclui a moto e, em cascata, seus abastecimentos, trocas de óleo e\
+        \ leituras"
+      tags:
+      - Motos
+    get:
+      operationId: buscar
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MotorcycleDTO"
+          description: OK
+      summary: Busca uma moto do usuário (404 se não existir ou for de outro dono)
+      tags:
+      - Motos
+    put:
+      operationId: atualizar_2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MotorcycleRequestDTO"
+        required: true
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MotorcycleDTO"
+          description: OK
+      summary: Atualiza uma moto do usuário
+      tags:
+      - Motos
+  /api/v1/motorcycles/{id}/history:
+    get:
+      operationId: historico
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MotorcycleRevisionDTO"
+          description: OK
+      summary: Histórico de revisões da moto (Hibernate Envers)
+      tags:
+      - Motos
+  /api/v1/motorcycles/{motoId}/odometer-readings:
+    get:
+      operationId: listar_3
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OdometerReadingDTO"
+          description: OK
+      summary: "Lista as leituras avulsas de hodômetro da moto, em ordem cronológica"
+      tags:
+      - Leituras de hodômetro
+    post:
+      operationId: criar_3
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OdometerReadingRequestDTO"
+        required: true
+      responses:
+        "201":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OdometerReadingDTO"
+          description: Created
+      summary: Registra um km avulso (sem abastecer). 400 se o hodômetro quebrar a
+        ordem cronológica da moto
+      tags:
+      - Leituras de hodômetro
+  /api/v1/motorcycles/{motoId}/odometer-readings/{id}:
+    delete:
+      operationId: excluir_3
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      summary: Exclui uma leitura avulsa
+      tags:
+      - Leituras de hodômetro
+  /api/v1/motorcycles/{motoId}/oil-changes:
+    get:
+      operationId: listar_2
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OilChangeDTO"
+          description: OK
+      summary: "Lista as trocas de óleo da moto, mais recente primeiro"
+      tags:
+      - Troca de óleo
+    post:
+      operationId: criar_2
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OilChangeRequestDTO"
+        required: true
+      responses:
+        "201":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OilChangeDTO"
+          description: Created
+      summary: Registra uma troca de óleo. 400 se o hodômetro quebrar a ordem cronológica
+        da moto
+      tags:
+      - Troca de óleo
+  /api/v1/motorcycles/{motoId}/oil-changes/{id}:
+    delete:
+      operationId: excluir_1
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      summary: Exclui uma troca de óleo
+      tags:
+      - Troca de óleo
+    put:
+      operationId: atualizar_1
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OilChangeRequestDTO"
+        required: true
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OilChangeDTO"
+          description: OK
+      summary: Atualiza uma troca de óleo
+      tags:
+      - Troca de óleo
+  /api/v1/motorcycles/{motoId}/oil-status:
+    get:
+      operationId: status
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OilStatusDTO"
+          description: OK
+      summary: "Próxima troca de óleo: vence primeiro o que ocorrer antes entre km\
+        \ e tempo. Sem troca registrada, só o hodômetro atual vem preenchido"
+      tags:
+      - Troca de óleo
+  /api/v1/motorcycles/{motoId}/refuelings:
+    get:
+      operationId: listar_1
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: from
+        required: false
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: to
+        required: false
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: pageable
+        required: true
+        schema:
+          $ref: "#/components/schemas/Pageable"
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PagedModelRefuelingDTO"
+          description: OK
+      summary: "Lista abastecimentos da moto, paginado (padrão: 20 por página, mais\
+        \ recentes primeiro). `from`/`to` filtram pela data (inclusivos)."
+      tags:
+      - Abastecimentos
+    post:
+      operationId: criar_1
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefuelingRequestDTO"
+        required: true
+      responses:
+        "201":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RefuelingDTO"
+          description: Created
+      summary: Registra um abastecimento. 400 se o hodômetro quebrar a ordem cronológica
+        da moto
+      tags:
+      - Abastecimentos
+  /api/v1/motorcycles/{motoId}/refuelings/{id}:
+    delete:
+      operationId: excluir
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      summary: Exclui um abastecimento
+      tags:
+      - Abastecimentos
+    put:
+      operationId: atualizar
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefuelingRequestDTO"
+        required: true
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RefuelingDTO"
+          description: OK
+      summary: Atualiza um abastecimento
+      tags:
+      - Abastecimentos
+  /api/v1/motorcycles/{motoId}/stats:
+    get:
+      operationId: resumo
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: from
+        required: false
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: to
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/StatsDTO"
+          description: OK
+      summary: "Métricas de rodagem e consumo de um período. Sem `from`: data do primeiro\
+        \ registro; sem `to`: hoje. km/l e custo por km são ponderados (Σkm / Σlitros),\
+        \ com selo de baixa confiança quando há menos de 3 trechos"
+      tags:
+      - Métricas
+  /api/v1/motorcycles/{motoId}/stats/monthly:
+    get:
+      operationId: mensal
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: year
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyStatsDTO"
+          description: OK
+      summary: "Série mensal de um ano: sempre 12 meses (sem movimento ou futuros\
+        \ vêm zerados), com a variação do gasto contra o mês anterior"
+      tags:
+      - Métricas
+  /api/v1/motorcycles/{motoId}/stats/yearly:
+    get:
+      operationId: anual
+      parameters:
+      - in: path
+        name: motoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/YearlyStatsDTO"
+          description: OK
+      summary: "Série anual: um item por ano com algum registro, em ordem crescente"
+      tags:
+      - Métricas
+  /api/v1/oil-intervals:
+    get:
+      operationId: listar_4
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OilIntervalDTO"
+          description: OK
+      summary: "Intervalo de troca sugerido por tipo de óleo (padrão e faixa em km,\
+        \ e meses) — só pré-preenche o formulário"
+      tags:
+      - Troca de óleo
+components:
+  schemas:
+    MonthlyStatsDTO:
+      type: object
+      properties:
+        month:
+          type: integer
+          format: int32
+        spentChangePct:
+          type: number
+        stats:
+          $ref: "#/components/schemas/StatsDTO"
+        year:
+          type: integer
+          format: int32
+    MotorcycleDTO:
+      type: object
+      properties:
+        active:
+          type: boolean
+        brand:
+          type: string
+        id:
+          type: string
+          format: uuid
+        initialOdometerKm:
+          type: integer
+          format: int32
+        model:
+          type: string
+        modelYear:
+          type: integer
+          format: int32
+        nickname:
+          type: string
+        plate:
+          type: string
+        tankCapacityLiters:
+          type: number
+    MotorcycleRequestDTO:
+      type: object
+      properties:
+        active:
+          type: boolean
+        brand:
+          type: string
+          maxLength: 60
+          minLength: 0
+        initialOdometerKm:
+          type: integer
+          format: int32
+          minimum: 0
+        model:
+          type: string
+          maxLength: 60
+          minLength: 0
+        modelYear:
+          type: integer
+          format: int32
+          maximum: 2100
+          minimum: 1900
+        nickname:
+          type: string
+          maxLength: 60
+          minLength: 0
+        plate:
+          type: string
+          maxLength: 10
+          minLength: 0
+        tankCapacityLiters:
+          type: number
+          minimum: 0.0
+      required:
+      - initialOdometerKm
+      - model
+      - nickname
+    MotorcycleRevisionDTO:
+      type: object
+      properties:
+        active:
+          type: boolean
+        changedAt:
+          type: string
+          format: date-time
+        changedBy:
+          type: string
+        id:
+          type: string
+          format: uuid
+        initialOdometerKm:
+          type: integer
+          format: int32
+        model:
+          type: string
+        nickname:
+          type: string
+        revision:
+          type: integer
+          format: int32
+        revisionType:
+          type: string
+    OdometerReadingDTO:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        id:
+          type: string
+          format: uuid
+        odometerKm:
+          type: integer
+          format: int32
+    OdometerReadingRequestDTO:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        odometerKm:
+          type: integer
+          format: int32
+          minimum: 0
+      required:
+      - date
+      - odometerKm
+    OilChangeDTO:
+      type: object
+      properties:
+        brand:
+          type: string
+        cost:
+          type: number
+        date:
+          type: string
+          format: date
+        id:
+          type: string
+          format: uuid
+        intervalKm:
+          type: integer
+          format: int32
+        intervalMonths:
+          type: integer
+          format: int32
+        odometerKm:
+          type: integer
+          format: int32
+        oilType:
+          type: string
+          enum:
+          - MINERAL
+          - SEMI_SYNTHETIC
+          - SYNTHETIC
+        viscosity:
+          type: string
+    OilChangeRequestDTO:
+      type: object
+      properties:
+        brand:
+          type: string
+          maxLength: 60
+          minLength: 0
+        cost:
+          type: number
+          minimum: 0.0
+        date:
+          type: string
+          format: date
+        intervalKm:
+          type: integer
+          format: int32
+          maximum: 100000
+          minimum: 1
+        intervalMonths:
+          type: integer
+          format: int32
+          maximum: 60
+          minimum: 1
+        odometerKm:
+          type: integer
+          format: int32
+          minimum: 0
+        oilType:
+          type: string
+          enum:
+          - MINERAL
+          - SEMI_SYNTHETIC
+          - SYNTHETIC
+        viscosity:
+          type: string
+          maxLength: 20
+          minLength: 0
+      required:
+      - date
+      - intervalKm
+      - intervalMonths
+      - odometerKm
+      - oilType
+    OilIntervalDTO:
+      type: object
+      properties:
+        defaultKm:
+          type: integer
+          format: int32
+        defaultMonths:
+          type: integer
+          format: int32
+        maxKm:
+          type: integer
+          format: int32
+        minKm:
+          type: integer
+          format: int32
+        type:
+          type: string
+          enum:
+          - MINERAL
+          - SEMI_SYNTHETIC
+          - SYNTHETIC
+    OilStatusDTO:
+      type: object
+      properties:
+        currentOdometerKm:
+          type: integer
+          format: int32
+        daysRemaining:
+          type: integer
+          format: int64
+        dueDate:
+          type: string
+          format: date
+        dueKm:
+          type: integer
+          format: int32
+        kmRemaining:
+          type: integer
+          format: int32
+        lastChange:
+          $ref: "#/components/schemas/OilChangeDTO"
+        level:
+          type: string
+          enum:
+          - OK
+          - PERTO
+          - VENCIDA
+        limitedBy:
+          type: string
+          enum:
+          - KM
+          - TIME
+    PageMetadata:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int64
+    Pageable:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+        size:
+          type: integer
+          format: int32
+          minimum: 1
+        sort:
+          type: array
+          items:
+            type: string
+    PagedModelRefuelingDTO:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/RefuelingDTO"
+        page:
+          $ref: "#/components/schemas/PageMetadata"
+    RefuelingDTO:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        fuelType:
+          type: string
+          enum:
+          - GASOLINA_COMUM
+          - GASOLINA_ADITIVADA
+          - ETANOL
+        fullTank:
+          type: boolean
+        id:
+          type: string
+          format: uuid
+        liters:
+          type: number
+        odometerKm:
+          type: integer
+          format: int32
+        pricePerLiter:
+          type: number
+        station:
+          type: string
+        totalValue:
+          type: number
+    RefuelingRequestDTO:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        fuelType:
+          type: string
+          enum:
+          - GASOLINA_COMUM
+          - GASOLINA_ADITIVADA
+          - ETANOL
+        fullTank:
+          type: boolean
+        liters:
+          type: number
+          minimum: 0.0
+        odometerKm:
+          type: integer
+          format: int32
+          minimum: 0
+        station:
+          type: string
+          maxLength: 120
+          minLength: 0
+        totalValue:
+          type: number
+          minimum: 0.0
+      required:
+      - date
+      - fuelType
+      - liters
+      - odometerKm
+      - totalValue
+    StatsDTO:
+      type: object
+      properties:
+        bestKmPerLiter:
+          type: number
+        costPerKm:
+          type: number
+        from:
+          type: string
+          format: date
+        km:
+          type: integer
+          format: int32
+        kmPerDay:
+          type: number
+        kmPerLiter:
+          type: number
+        litersRefueled:
+          type: number
+        longestSegmentKm:
+          type: integer
+          format: int32
+        lowConfidence:
+          type: boolean
+        pricePerLiter:
+          type: number
+        segmentCount:
+          type: integer
+          format: int32
+        to:
+          type: string
+          format: date
+        totalSpent:
+          type: number
+        worstKmPerLiter:
+          type: number
+    YearlyStatsDTO:
+      type: object
+      properties:
+        stats:
+          $ref: "#/components/schemas/StatsDTO"
+        year:
+          type: integer
+          format: int32
+  securitySchemes:
+    bearer-jwt:
+      bearerFormat: JWT
+      name: bearer-jwt
+      scheme: bearer
+      type: http

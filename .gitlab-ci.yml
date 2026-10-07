@@ -1,0 +1,46 @@
+image: eclipse-temurin:25-jdk-jammy
+
+stages:
+  - test
+  - contract
+  - build
+
+# docker:dind — os ITs com Testcontainers (Postgres descartável) precisam de um daemon
+# Docker acessível; a Testcontainers-java fala com a Docker Remote API via DOCKER_HOST
+# diretamente, então nada precisa ser instalado na imagem além dessa env var.
+default:
+  services:
+    - docker:dind
+
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  TESTCONTAINERS_RYUK_DISABLED: "true"  # container de limpeza do Testcontainers costuma travar em runners restritos
+
+test:
+  stage: test
+  script:
+    - chmod +x gradlew
+    - ./gradlew check test
+
+contract-drift-check:
+  stage: contract
+  script:
+    - chmod +x gradlew
+    - cp openapi/openapi.yaml openapi/openapi.yaml.committed
+    - ./gradlew generateOpenApiDocs
+    - diff -u openapi/openapi.yaml.committed openapi/openapi.yaml || (echo "O contrato openapi/openapi.yaml está desatualizado. Rode './gradlew generateOpenApiDocs' e faça commit do resultado." && exit 1)
+  artifacts:
+    paths:
+      - openapi/openapi.yaml
+    expire_in: 1 week
+
+build:
+  stage: build
+  script:
+    - chmod +x gradlew
+    - ./gradlew clean build
+  artifacts:
+    paths:
+      - build/libs/moto-service-0.0.1-SNAPSHOT.jar
+    expire_in: 1 week
