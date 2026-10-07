@@ -56,6 +56,28 @@ class OdometerRulesTest {
     }
 
     @Test
+    void citaORegistroAnteriorDeMaiorHodometroEnaoOMaisAntigo() {
+        final var outros = List.of(p("2026-01-10", 1000), p("2026-01-20", 1300), p("2026-02-25", 1700));
+
+        assertThatThrownBy(() -> OdometerRules.validar(outros, 0, LocalDate.parse("2026-03-01"), 1200))
+                .isInstanceOf(InvalidOdometerException.class)
+                .hasMessageContaining("2026-02-25")
+                .hasMessageContaining("1700")
+                .hasMessageNotContaining("2026-01-20");
+    }
+
+    @Test
+    void citaORegistroPosteriorDeMenorHodometro() {
+        final var outros = List.of(p("2026-03-10", 2000), p("2026-04-10", 2500));
+
+        assertThatThrownBy(() -> OdometerRules.validar(outros, 0, LocalDate.parse("2026-02-01"), 2600))
+                .isInstanceOf(InvalidOdometerException.class)
+                .hasMessageContaining("2026-03-10")
+                .hasMessageContaining("2000")
+                .hasMessageNotContaining("2026-04-10");
+    }
+
+    @Test
     void mesmaDataNaoCompara() {
         final var outros = List.of(p("2026-02-01", 1500));
 

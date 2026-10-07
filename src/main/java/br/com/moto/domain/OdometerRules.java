@@ -2,6 +2,7 @@ package br.com.moto.domain;
 
 import br.com.moto.exceptions.InvalidOdometerException;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 
 /** Regras do hodômetro de uma moto — puras, sem Spring nem banco. */
@@ -23,16 +24,24 @@ public final class OdometerRules {
             throw new InvalidOdometerException(
                     "Hodômetro (%d km) abaixo do hodômetro inicial da moto (%d km)".formatted(km, hodometroInicial));
         }
-        for (final var ponto : outros) {
-            if (ponto.date().isBefore(data) && ponto.km() > km) {
-                throw new InvalidOdometerException(
-                        "Hodômetro (%d km) menor que o registro de %s (%d km)".formatted(km, ponto.date(), ponto.km()));
-            }
-            if (ponto.date().isAfter(data) && ponto.km() < km) {
-                throw new InvalidOdometerException(
-                        "Hodômetro (%d km) maior que o registro de %s (%d km)".formatted(km, ponto.date(), ponto.km()));
-            }
-        }
+        // Cita o registro que mais explica o erro: entre os anteriores, o de maior km (o que o novo valor deveria
+        // alcançar); entre os posteriores, o de menor km. Empate de km fica com o mais próximo da data.
+        outros.stream()
+                .filter(ponto -> ponto.date().isBefore(data))
+                .max(Comparator.comparingInt(OdometerPoint::km).thenComparing(OdometerPoint::date))
+                .filter(anterior -> anterior.km() > km)
+                .ifPresent(anterior -> {
+                    throw new InvalidOdometerException(
+                            "Hodômetro (%d km) menor que o registro de %s (%d km)".formatted(km, anterior.date(), anterior.km()));
+                });
+        outros.stream()
+                .filter(ponto -> ponto.date().isAfter(data))
+                .min(Comparator.comparingInt(OdometerPoint::km).thenComparing(OdometerPoint::date))
+                .filter(posterior -> posterior.km() < km)
+                .ifPresent(posterior -> {
+                    throw new InvalidOdometerException(
+                            "Hodômetro (%d km) maior que o registro de %s (%d km)".formatted(km, posterior.date(), posterior.km()));
+                });
     }
 
     /** Hodômetro atual: o maior entre os registros e o inicial da moto. */
