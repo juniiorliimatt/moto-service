@@ -3,6 +3,7 @@ package br.com.moto.services;
 import br.com.moto.domain.OdometerPoint;
 import br.com.moto.domain.OdometerRules;
 import br.com.moto.repositories.OdometerReadingRepository;
+import br.com.moto.repositories.OilChangeRepository;
 import br.com.moto.repositories.RefuelingRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -22,12 +23,14 @@ public class OdometerService {
     private final MotorcycleService motorcycleService;
     private final OdometerReadingRepository readingRepository;
     private final RefuelingRepository refuelingRepository;
+    private final OilChangeRepository oilChangeRepository;
 
     public OdometerService(final MotorcycleService motorcycleService, final OdometerReadingRepository readingRepository,
-                           final RefuelingRepository refuelingRepository) {
+                           final RefuelingRepository refuelingRepository, final OilChangeRepository oilChangeRepository) {
         this.motorcycleService = motorcycleService;
         this.readingRepository = readingRepository;
         this.refuelingRepository = refuelingRepository;
+        this.oilChangeRepository = oilChangeRepository;
     }
 
     /** Todos os registros de hodômetro da moto, de qualquer fonte. 404 se a moto não for do dono. */
@@ -59,6 +62,8 @@ public class OdometerService {
         refuelingRepository.findByMotorcycleIdAndOwnerUsernameOrderByDateAscOdometerKmAsc(motoId, owner)
                 .forEach(abastecimento -> pontos.add(
                         new OdometerPoint(abastecimento.getId(), abastecimento.getDate(), abastecimento.getOdometerKm())));
+        oilChangeRepository.findByMotorcycleIdAndOwnerUsernameOrderByDateDescOdometerKmDesc(motoId, owner)
+                .forEach(troca -> pontos.add(new OdometerPoint(troca.getId(), troca.getDate(), troca.getOdometerKm())));
         return pontos;
     }
 }
