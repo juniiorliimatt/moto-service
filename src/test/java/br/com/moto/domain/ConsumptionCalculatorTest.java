@@ -52,7 +52,7 @@ class ConsumptionCalculatorTest {
     }
 
     @Test
-    @DisplayName("janela de janeiro: um trecho, baixa confiança")
+    @DisplayName("janela de janeiro: um trecho, baixa confiança; os litros do 1º abastecimento entram na divisão")
     void janelaDeJaneiroTemUmTrechoEBaixaConfianca() {
         final var segmentos = ConsumptionCalculator.segmentos(MASSA);
 
@@ -61,14 +61,14 @@ class ConsumptionCalculatorTest {
         assertThat(jan.litersRefueled()).isEqualByComparingTo("18.00");
         assertThat(jan.totalSpent()).isEqualByComparingTo("110.00");
         assertThat(jan.segmentKm()).isEqualTo(300);
-        assertThat(jan.kmPerLiter()).isEqualByComparingTo("37.50");
-        assertThat(jan.costPerKm()).isEqualByComparingTo("0.17");
+        assertThat(jan.kmPerLiter()).as("300 km / 18 L (10 + 8)").isEqualByComparingTo("16.67");
+        assertThat(jan.costPerKm()).as("R$ 110,00 / 300 km").isEqualByComparingTo("0.37");
         assertThat(jan.segmentCount()).isEqualTo(1);
         assertThat(jan.lowConfidence()).isTrue();
     }
 
     @Test
-    @DisplayName("janela é ponderada (Σkm / Σlitros), nunca média de médias")
+    @DisplayName("janela é ponderada (Σkm / Σlitros abastecidos), nunca média de médias")
     void janelaDeFevereiroEPonderada() {
         final var segmentos = ConsumptionCalculator.segmentos(MASSA);
 
@@ -90,7 +90,7 @@ class ConsumptionCalculatorTest {
 
         final var tudo = ConsumptionCalculator.janela(MASSA, segmentos, null, null);
 
-        assertThat(tudo.kmPerLiter()).as("700 km / 23 L").isEqualByComparingTo("30.43");
+        assertThat(tudo.kmPerLiter()).as("700 km / 33 L (todos os abastecimentos)").isEqualByComparingTo("21.21");
         assertThat(tudo.segmentCount()).isEqualTo(3);
         assertThat(tudo.lowConfidence()).isFalse();
         assertThat(tudo.litersRefueled()).isEqualByComparingTo("33.00");
@@ -143,6 +143,41 @@ class ConsumptionCalculatorTest {
         assertThat(janela.kmPerLiter()).isNull();
         assertThat(janela.costPerKm()).isNull();
         assertThat(janela.litersRefueled()).isEqualByComparingTo("6.00");
+    }
+
+    @Test
+    @DisplayName("o consumo é a diferença de hodômetro ÷ todos os litros abastecidos, sem olhar se o tanque foi completado")
+    void consumoIgnoraSeOTanqueFoiCompletado() {
+        // dados reais da Fazer: 68.629 → 69.497 km (868 km) com 9 + 10 + 5 = 24 L. Dividir só pelos litros dos trechos
+        // (15 L) dava 57,9 km/l, valor impossível para a moto; todos os litros abastecidos dão 36,2.
+        final var parciais = List.of(
+                e("2026-10-05", 68629, "9.00", "64.75", true),
+                e("2026-10-19", 69146, "10.00", "71.40", false),
+                e("2026-10-28", 69497, "5.00", "36.05", false));
+        final var todosCheios = parciais.stream()
+                .map(f -> new FuelEntry(f.date(), f.odometerKm(), f.liters(), f.totalValue(), true)).toList();
+
+        final var comParciais = ConsumptionCalculator.janela(parciais, ConsumptionCalculator.segmentos(parciais), null, null);
+        final var comCheios = ConsumptionCalculator.janela(todosCheios, ConsumptionCalculator.segmentos(todosCheios), null, null);
+
+        assertThat(comParciais.segmentKm()).isEqualTo(868);
+        assertThat(comParciais.litersRefueled()).isEqualByComparingTo("24.00");
+        assertThat(comParciais.kmPerLiter()).as("868 km / 24 L").isEqualByComparingTo("36.17");
+        assertThat(comParciais.costPerKm()).as("R$ 172,20 / 868 km").isEqualByComparingTo("0.20");
+        assertThat(comCheios.kmPerLiter()).as("o resultado não depende do tanque completo").isEqualByComparingTo(comParciais.kmPerLiter());
+        assertThat(comCheios.costPerKm()).isEqualByComparingTo(comParciais.costPerKm());
+    }
+
+    @Test
+    @DisplayName("um único abastecimento (ou nenhum km rodado) não gera consumo, mesmo com litros abastecidos")
+    void semKmRodadoNaoHaConsumo() {
+        final var um = List.of(e("2026-10-05", 68629, "9.00", "64.75", true));
+
+        final var janela = ConsumptionCalculator.janela(um, ConsumptionCalculator.segmentos(um), null, null);
+
+        assertThat(janela.kmPerLiter()).isNull();
+        assertThat(janela.costPerKm()).isNull();
+        assertThat(janela.litersRefueled()).isEqualByComparingTo("9.00");
     }
 
     @Test

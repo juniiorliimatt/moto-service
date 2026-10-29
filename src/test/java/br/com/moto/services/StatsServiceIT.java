@@ -74,7 +74,7 @@ class StatsServiceIT extends PostgresIT {
         assertThat(jan.from()).isEqualTo(LocalDate.parse("2026-01-01"));
         assertThat(jan.to()).isEqualTo(LocalDate.parse("2026-01-31"));
         assertThat(jan.km()).isEqualTo(300);
-        assertThat(jan.kmPerLiter()).isEqualByComparingTo("37.50");
+        assertThat(jan.kmPerLiter()).as("300 km / 18 L abastecidos").isEqualByComparingTo("16.67");
         assertThat(jan.totalSpent()).isEqualByComparingTo("110.00");
         assertThat(jan.litersRefueled()).isEqualByComparingTo("18.00");
         assertThat(jan.lowConfidence()).isTrue();
@@ -147,14 +147,14 @@ class StatsServiceIT extends PostgresIT {
         assertThat(resumo.from()).isEqualTo(LocalDate.parse("2026-01-05"));
         assertThat(resumo.to()).isEqualTo(HOJE);
         assertThat(resumo.km()).isEqualTo(700);
-        assertThat(resumo.kmPerLiter()).isEqualByComparingTo("30.43");
+        assertThat(resumo.kmPerLiter()).as("700 km / 33 L abastecidos").isEqualByComparingTo("21.21");
         assertThat(resumo.segmentCount()).isEqualTo(3);
         assertThat(resumo.lowConfidence()).isFalse();
         assertThat(resumo.kmPerDay()).as("700 km em 70 dias").isEqualByComparingTo("10.00");
         assertThat(resumo.litersRefueled()).isEqualByComparingTo("33.00");
         assertThat(resumo.totalSpent()).isEqualByComparingTo("205.00");
         assertThat(resumo.longestSegmentKm()).isEqualTo(300);
-        assertThat(resumo.costPerKm()).as("(50 + 32 + 63) / 700 km").isEqualByComparingTo("0.21");
+        assertThat(resumo.costPerKm()).as("R$ 205,00 / 700 km").isEqualByComparingTo("0.29");
     }
 
     @Test
@@ -202,7 +202,7 @@ class StatsServiceIT extends PostgresIT {
 
         assertThat(anos).extracting("year").containsExactly(2026, 2027);
         assertThat(anos.get(0).stats().km()).isEqualTo(700);
-        assertThat(anos.get(0).stats().kmPerLiter()).isEqualByComparingTo("30.43");
+        assertThat(anos.get(0).stats().kmPerLiter()).isEqualByComparingTo("21.21");
         assertThat(anos.get(0).stats().totalSpent()).isEqualByComparingTo("205.00");
         assertThat(anos.get(1).stats().km()).isEqualTo(300);
         assertThat(anos.get(1).stats().totalSpent()).isEqualByComparingTo("0");

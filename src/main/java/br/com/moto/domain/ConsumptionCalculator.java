@@ -11,10 +11,10 @@ import java.util.Objects;
 /**
  * Cálculo de consumo por trecho e por janela — puro, sem Spring nem banco.
  *
- * <p>Como o tanque nem sempre é completado, o litro abastecido em N só aproxima o que foi gasto
- * desde N-1. Por isso a média de uma janela é <b>ponderada</b> (Σkm / Σlitros, nunca média de
- * médias): o erro de nível de tanque fica limitado a uma capacidade de tanque e se dilui quanto
- * maior a janela.
+ * <p>A média de uma janela é <b>ponderada</b> e simples: Σ das diferenças de hodômetro ÷ Σ dos litros
+ * de todos os abastecimentos da janela (nunca média de médias). A marcação "tanque completo" não
+ * entra na conta — o litro abastecido em N só aproxima o que foi gasto desde N-1, e esse erro de nível
+ * de tanque se dilui quanto maior a janela.
  */
 public final class ConsumptionCalculator {
 
@@ -56,13 +56,14 @@ public final class ConsumptionCalculator {
         final var gasto = entradas.stream().map(FuelEntry::totalValue).reduce(BigDecimal.ZERO, BigDecimal::add);
         final var preco = litros.signum() > 0 ? gasto.divide(litros, 3, RoundingMode.HALF_UP) : null;
 
+        // km = diferenças de hodômetro entre os abastecimentos; litros e gasto = TODOS os abastecimentos da janela, sem olhar se o
+        // tanque foi completado (decisão do desenvolvedor). Dividir só pelos litros dos trechos desconsiderava o combustível do 1º
+        // abastecimento e inflava a média (868 km / 15 L = 57,9 km/l numa moto que faz 30–35).
         final int km = trechos.stream().mapToInt(Segment::km).sum();
-        final var litrosDosTrechos = trechos.stream().map(Segment::liters).reduce(BigDecimal.ZERO, BigDecimal::add);
-        final var custoDosTrechos = trechos.stream().map(Segment::cost).reduce(BigDecimal.ZERO, BigDecimal::add);
-        final var kmPorLitro = km > 0 && litrosDosTrechos.signum() > 0
-                ? BigDecimal.valueOf(km).divide(litrosDosTrechos, 2, RoundingMode.HALF_UP) : null;
+        final var kmPorLitro = km > 0 && litros.signum() > 0
+                ? BigDecimal.valueOf(km).divide(litros, 2, RoundingMode.HALF_UP) : null;
         final var custoPorKm = km > 0
-                ? custoDosTrechos.divide(BigDecimal.valueOf(km), 2, RoundingMode.HALF_UP) : null;
+                ? gasto.divide(BigDecimal.valueOf(km), 2, RoundingMode.HALF_UP) : null;
 
         final var eficiencias = trechos.stream().map(Segment::kmPerLiter).filter(Objects::nonNull).toList();
         return new ConsumptionWindow(litros, gasto, preco, km, kmPorLitro, custoPorKm, trechos.size(),

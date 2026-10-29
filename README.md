@@ -48,15 +48,18 @@ pode ficar abaixo do hodômetro inicial, de um registro anterior ou acima de um 
 mesma data não são comparados). Violação → **400** com o motivo. Km rodados num período = hodômetro ao
 fim dele − hodômetro ao fim do período anterior (ou o inicial).
 
-**Consumo (km/l).** Como o tanque nem sempre é completado, o litro abastecido só aproxima o que foi
-gasto desde o abastecimento anterior:
+**Consumo (km/l).** Simples: a **diferença de hodômetro** entre os abastecimentos dividida pelos
+**litros abastecidos**. A marcação `fullTank` (tanque completo) **não entra na conta** (decisão do
+desenvolvedor) — é só informativa.
 
-- **Trecho** (abastecimento N-1 → N): `km / litros de N`. É **exato** só se N e N-1 completaram o tanque
-  (`fullTank`); senão é **estimado**. Marcar `fullTank` é opcional e só melhora a precisão.
-- **Janela** (mês, ano, qualquer período): `Σkm / Σlitros` dos trechos que **terminam** nela —
-  ponderada, nunca média de médias. Menos de 3 trechos → `lowConfidence`.
-- O primeiro abastecimento da moto não gera trecho (o nível do tanque antes dele é desconhecido), mas
-  conta em litros e gasto.
+- **Trecho** (abastecimento N-1 → N): `km` rodados entre eles; o trecho pertence à janela do
+  abastecimento N. O `km/l` por trecho (melhor/pior) usa os litros de N.
+- **Janela** (mês, ano, qualquer período): `Σkm dos trechos que terminam nela / Σlitros de TODOS os
+  abastecimentos da janela` (e o custo por km usa o gasto de todos) — ponderada, nunca média de médias.
+  Ex.: 868 km com 9 + 10 + 5 L = 24 L → 36,2 km/l. Menos de 3 trechos → `lowConfidence`.
+- O primeiro abastecimento da moto não gera trecho (não há km antes dele), mas **seus litros entram na
+  divisão**. Por isso um período com poucos abastecimentos puxa a média para baixo (ex.: 300 km com 10 + 8 L
+  = 16,7 km/l); a média se estabiliza com o histórico.
 
 **Próxima troca de óleo.** Vence o que ocorrer primeiro entre `hodômetro da troca + intervalKm` e
 `data da troca + intervalMonths`. Status: `VENCIDA` (km ou dias restantes ≤ 0), `PERTO` (km restantes ≤

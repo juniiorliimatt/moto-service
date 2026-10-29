@@ -39,10 +39,13 @@ O contrato é o `openapi/openapi.yaml`.
   `OdometerService.validarNovo` (usado por abastecimento, troca e leitura avulsa; na edição
   passa `ignorarId`) aplica `OdometerRules`. Registros na **mesma data** não são comparados.
   Toda fonte nova de km precisa entrar em `OdometerService.carregarPontos`.
-- **Consumo** (`ConsumptionCalculator`): trecho = `km / litros do abastecimento final`; `exact`
-  só entre dois `fullTank`. A média de uma janela é **ponderada** (Σkm / Σlitros) — **nunca média
-  de médias**. O trecho pertence à janela do abastecimento que o **termina**. O primeiro
-  abastecimento não gera trecho. `lowConfidence` = menos de `MIN_SEGMENTS_CONFIDENT` (3) trechos.
+- **Consumo** (`ConsumptionCalculator`): **diferença de hodômetro ÷ litros abastecidos**, e a marcação
+  `fullTank` **não entra na conta** (decisão do desenvolvedor, 2026-10-28; `Segment.exact` ficou só
+  informativo). A média de uma janela é **ponderada**: Σkm dos trechos que terminam nela ÷ Σlitros de
+  **todos** os abastecimentos da janela (custo/km idem, com o gasto) — **nunca média de médias**. Antes
+  dividia só pelos litros dos trechos (ignorava os litros do 1º abastecimento) e dava 57,9 km/l numa moto
+  que faz 30–35. O primeiro abastecimento não gera trecho, mas seus litros entram na divisão.
+  `lowConfidence` = menos de `MIN_SEGMENTS_CONFIDENT` (3) trechos.
 - **Km do período** vem de `OdometerTimeline` (todas as fontes), **não** da soma dos trechos —
   uma leitura avulsa conta km sem alterar o consumo.
 - **Próxima troca** (`OilStatusCalculator`, puro): `min(km, tempo)`; limiar "perto" =

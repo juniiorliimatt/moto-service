@@ -30,7 +30,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-/** Abastecimento. {@code odometerKm} é o hodômetro total; {@code fullTank} só refina o km/l entre dois cheios. */
+/** Abastecimento. {@code odometerKm} é o hodômetro total; {@code fullTank} é só informativo (não entra no cálculo do km/l). */
 @Getter
 @Setter
 @Builder
