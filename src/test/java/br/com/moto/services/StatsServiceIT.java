@@ -84,8 +84,6 @@ class StatsServiceIT extends PostgresIT {
         assertThat(fev.km()).isEqualTo(400);
         assertThat(fev.kmPerLiter()).isEqualByComparingTo("26.67");
         assertThat(fev.totalSpent()).isEqualByComparingTo("95.00");
-        assertThat(fev.bestKmPerLiter()).isEqualByComparingTo("40.00");
-        assertThat(fev.worstKmPerLiter()).isEqualByComparingTo("20.00");
         assertThat(meses.get(1).spentChangePct()).isEqualByComparingTo("-13.64");
     }
 
@@ -153,7 +151,6 @@ class StatsServiceIT extends PostgresIT {
         assertThat(resumo.kmPerDay()).as("700 km em 70 dias").isEqualByComparingTo("10.00");
         assertThat(resumo.litersRefueled()).isEqualByComparingTo("33.00");
         assertThat(resumo.totalSpent()).isEqualByComparingTo("205.00");
-        assertThat(resumo.longestSegmentKm()).isEqualTo(300);
         assertThat(resumo.costPerKm()).as("R$ 205,00 / 700 km").isEqualByComparingTo("0.29");
     }
 

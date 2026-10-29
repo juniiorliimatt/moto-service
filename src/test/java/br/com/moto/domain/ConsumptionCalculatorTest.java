@@ -29,26 +29,14 @@ class ConsumptionCalculatorTest {
     }
 
     @Test
-    @DisplayName("trecho entre dois tanques cheios é exato: km / litros do abastecimento final")
-    void trechoEntreDoisCheiosEExato() {
+    @DisplayName("trecho entre dois abastecimentos: km rodados (diferença de hodômetro), na data do abastecimento final")
+    void trechoEOsKmEntreDoisAbastecimentos() {
         final var segmentos = ConsumptionCalculator.segmentos(MASSA);
 
         assertThat(segmentos).hasSize(3);
-        assertThat(segmentos.get(0).km()).isEqualTo(300);
-        assertThat(segmentos.get(0).kmPerLiter()).isEqualByComparingTo("37.50");
-        assertThat(segmentos.get(0).exact()).isTrue();
+        assertThat(segmentos).extracting(Segment::km).containsExactly(300, 200, 200);
         assertThat(segmentos.get(0).date()).isEqualTo(LocalDate.parse("2026-01-20"));
-    }
-
-    @Test
-    @DisplayName("trecho com abastecimento parcial (atual ou anterior) é estimado")
-    void trechoComParcialEEstimado() {
-        final var segmentos = ConsumptionCalculator.segmentos(MASSA);
-
-        assertThat(segmentos.get(1).kmPerLiter()).isEqualByComparingTo("40.00");
-        assertThat(segmentos.get(1).exact()).as("atual parcial").isFalse();
-        assertThat(segmentos.get(2).kmPerLiter()).isEqualByComparingTo("20.00");
-        assertThat(segmentos.get(2).exact()).as("anterior parcial").isFalse();
+        assertThat(segmentos.get(1).date()).isEqualTo(LocalDate.parse("2026-02-10"));
     }
 
     @Test
@@ -77,9 +65,6 @@ class ConsumptionCalculatorTest {
         assertThat(fev.kmPerLiter()).as("400 km / 15 L, e não (40 + 20) / 2").isEqualByComparingTo("26.67");
         assertThat(fev.costPerKm()).isEqualByComparingTo("0.24");
         assertThat(fev.pricePerLiter()).isEqualByComparingTo("6.333");
-        assertThat(fev.bestKmPerLiter()).isEqualByComparingTo("40.00");
-        assertThat(fev.worstKmPerLiter()).isEqualByComparingTo("20.00");
-        assertThat(fev.longestSegmentKm()).isEqualTo(200);
         assertThat(fev.segmentCount()).isEqualTo(2);
     }
 
@@ -123,23 +108,19 @@ class ConsumptionCalculatorTest {
         assertThat(vazia.pricePerLiter()).isNull();
         assertThat(vazia.kmPerLiter()).isNull();
         assertThat(vazia.costPerKm()).isNull();
-        assertThat(vazia.bestKmPerLiter()).isNull();
-        assertThat(vazia.longestSegmentKm()).isNull();
         assertThat(vazia.lowConfidence()).isTrue();
     }
 
     @Test
-    @DisplayName("trecho sem km rodado não entra em melhor/pior nem na média")
-    void trechoSemKmNaoEntraNoMelhorPior() {
+    @DisplayName("trecho sem km rodado não gera média")
+    void trechoSemKmNaoGeraMedia() {
         final var entradas = List.of(
                 e("2026-03-01", 2000, "5.00", "30.00", true),
                 e("2026-03-02", 2000, "1.00", "6.00", false));
         final var segmentos = ConsumptionCalculator.segmentos(entradas);
 
-        assertThat(segmentos.get(0).kmPerLiter()).isNull();
+        assertThat(segmentos.get(0).km()).isZero();
         final var janela = ConsumptionCalculator.janela(entradas, segmentos, null, null);
-        assertThat(janela.bestKmPerLiter()).isNull();
-        assertThat(janela.worstKmPerLiter()).isNull();
         assertThat(janela.kmPerLiter()).isNull();
         assertThat(janela.costPerKm()).isNull();
         assertThat(janela.litersRefueled()).isEqualByComparingTo("6.00");

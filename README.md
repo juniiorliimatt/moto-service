@@ -53,7 +53,8 @@ fim dele − hodômetro ao fim do período anterior (ou o inicial).
 desenvolvedor) — é só informativa.
 
 - **Trecho** (abastecimento N-1 → N): `km` rodados entre eles; o trecho pertence à janela do
-  abastecimento N. O `km/l` por trecho (melhor/pior) usa os litros de N.
+  abastecimento N. **Não há km/l por trecho** (nem melhor/pior): com abastecimento parcial os litros de um
+  único abastecimento não representam o gasto do trecho e dava valores como 70 km/l.
 - **Janela** (mês, ano, qualquer período): `Σkm dos trechos que terminam nela / Σlitros de TODOS os
   abastecimentos da janela` (e o custo por km usa o gasto de todos) — ponderada, nunca média de médias.
   Ex.: 868 km com 9 + 10 + 5 L = 24 L → 36,2 km/l. Menos de 3 trechos → `lowConfidence`.

@@ -4,9 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Cálculo de consumo por trecho e por janela — puro, sem Spring nem banco.
@@ -35,8 +33,7 @@ public final class ConsumptionCalculator {
             final var anterior = ordenados.get(i - 1);
             final var atual = ordenados.get(i);
             final int km = Math.max(0, atual.odometerKm() - anterior.odometerKm());
-            segmentos.add(new Segment(atual.date(), km, atual.liters(), atual.totalValue(),
-                    anterior.fullTank() && atual.fullTank()));
+            segmentos.add(new Segment(atual.date(), km));
         }
         return List.copyOf(segmentos);
     }
@@ -65,12 +62,8 @@ public final class ConsumptionCalculator {
         final var custoPorKm = km > 0
                 ? gasto.divide(BigDecimal.valueOf(km), 2, RoundingMode.HALF_UP) : null;
 
-        final var eficiencias = trechos.stream().map(Segment::kmPerLiter).filter(Objects::nonNull).toList();
         return new ConsumptionWindow(litros, gasto, preco, km, kmPorLitro, custoPorKm, trechos.size(),
-                trechos.size() < MIN_SEGMENTS_CONFIDENT,
-                eficiencias.stream().max(Comparator.naturalOrder()).orElse(null),
-                eficiencias.stream().min(Comparator.naturalOrder()).orElse(null),
-                trechos.stream().map(Segment::km).max(Comparator.naturalOrder()).orElse(null));
+                trechos.size() < MIN_SEGMENTS_CONFIDENT);
     }
 
     private static boolean dentro(final LocalDate data, final LocalDate de, final LocalDate ate) {

@@ -98,8 +98,7 @@ public class StatsService {
         final long dias = Math.max(1, ChronoUnit.DAYS.between(de, ultimoDia) + 1);
         final var kmPorDia = BigDecimal.valueOf(km).divide(BigDecimal.valueOf(dias), 2, RoundingMode.HALF_UP);
         return new StatsDTO(de, ate, km, kmPorDia, janela.litersRefueled(), janela.totalSpent(), janela.pricePerLiter(),
-                janela.kmPerLiter(), janela.costPerKm(), janela.segmentCount(), janela.lowConfidence(),
-                janela.bestKmPerLiter(), janela.worstKmPerLiter(), janela.longestSegmentKm());
+                janela.kmPerLiter(), janela.costPerKm(), janela.segmentCount(), janela.lowConfidence());
     }
 
     private static BigDecimal variacaoDoGasto(final StatsDTO anterior, final StatsDTO atual) {

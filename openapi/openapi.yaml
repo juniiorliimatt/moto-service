@@ -896,8 +896,6 @@ components:
     StatsDTO:
       type: object
       properties:
-        bestKmPerLiter:
-          type: number
         costPerKm:
           type: number
         from:
@@ -912,9 +910,6 @@ components:
           type: number
         litersRefueled:
           type: number
-        longestSegmentKm:
-          type: integer
-          format: int32
         lowConfidence:
           type: boolean
         pricePerLiter:
@@ -926,8 +921,6 @@ components:
           type: string
           format: date
         totalSpent:
-          type: number
-        worstKmPerLiter:
           type: number
     YearlyStatsDTO:
       type: object

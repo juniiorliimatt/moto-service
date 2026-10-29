@@ -43,7 +43,7 @@ class StatsControllerTest {
     private static final String URL = "/api/v1/motorcycles/" + MOTO + "/stats";
     private static final StatsDTO STATS = new StatsDTO(LocalDate.parse("2026-01-01"), LocalDate.parse("2026-01-31"), 300,
             new BigDecimal("9.68"), new BigDecimal("18.00"), new BigDecimal("110.00"), new BigDecimal("6.111"),
-            new BigDecimal("37.50"), new BigDecimal("0.17"), 1, true, new BigDecimal("37.50"), new BigDecimal("37.50"), 300);
+            new BigDecimal("16.67"), new BigDecimal("0.37"), 1, true);
 
     @Autowired
     private MockMvc mockMvc;
@@ -64,10 +64,12 @@ class StatsControllerTest {
         mockMvc.perform(get(URL).with(jr()).param("from", "2026-01-01").param("to", "2026-01-31"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.km").value(300))
-                .andExpect(jsonPath("$.kmPerLiter").value(37.5))
+                .andExpect(jsonPath("$.kmPerLiter").value(16.67))
                 .andExpect(jsonPath("$.lowConfidence").value(true))
                 .andExpect(jsonPath("$.from").value("2026-01-01"))
-                .andExpect(jsonPath("$.longestSegmentKm").value(300));
+                .andExpect(jsonPath("$.bestKmPerLiter").doesNotExist())
+                .andExpect(jsonPath("$.worstKmPerLiter").doesNotExist())
+                .andExpect(jsonPath("$.longestSegmentKm").doesNotExist());
 
         verify(service).resumo(eq(MOTO), eq("jr"), eq(LocalDate.parse("2026-01-01")), eq(LocalDate.parse("2026-01-31")), any(LocalDate.class));
     }
